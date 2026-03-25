@@ -1,0 +1,62 @@
+{
+    "name": "rcsofttech/console-profiler-bundle",
+    "description": "A live, non-blocking TUI profiler dashboard for Symfony console commands. Displays real-time memory, duration, and SQL query metrics.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "console",
+        "profiler",
+        "tui",
+        "dashboard",
+        "middleware"
+    ],
+    "authors": [
+        {
+            "name": "Rahul Chavan",
+            "role": "Software Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.4",
+        "symfony/config": "^8.0",
+        "symfony/console": "^8.0",
+        "symfony/dependency-injection": "^8.0",
+        "symfony/event-dispatcher": "^8.0",
+        "symfony/http-kernel": "^8.0"
+    },
+    "require-dev": {
+        "doctrine/dbal": "^4.0",
+        "friendsofphp/php-cs-fixer": "^3.94",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "suggest": {
+        "doctrine/dbal": "Required for SQL query counting via DBAL Middleware (^4.0)",
+        "ext-pcntl": "Required for live, non-blocking TUI refresh via SIGALRM"
+    },
+    "autoload": {
+        "psr-4": {
+            "RcSoftTech\\ConsoleProfilerBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RcSoftTech\\ConsoleProfilerBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0-dev"
+        }
+    },
+    "scripts": {
+        "lint:md": "npx -y markdownlint-cli2 \"**/*.md\" \"#vendor\""
+    }
+}

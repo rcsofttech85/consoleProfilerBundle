@@ -1,38 +1,36 @@
 # Console Profiler Bundle
 
+[![CI](https://github.com/rcsofttech85/ConsoleProfilerBundle/actions/workflows/ci.yaml/badge.svg)](https://github.com/rcsofttech85/ConsoleProfilerBundle/actions/workflows/ci.yaml)
+[![Version](https://img.shields.io/packagist/v/rcsofttech/console-profiler-bundle.svg?label=stable)](https://packagist.org/packages/rcsofttech/console-profiler-bundle)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/828f3e302ce84185a0b0befdac5f1b27)](https://app.codacy.com/gh/rcsofttech85/ConsoleProfilerBundle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/828f3e302ce84185a0b0befdac5f1b27)](https://app.codacy.com/gh/rcsofttech85/ConsoleProfilerBundle/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+
 If you've ever watched a long-running Symfony console command crawl and
 wondered, "Is this thing leaking memory? Am I hammering the database with N+1
 queries right now?" — this bundle is for you.
 
 The standard Symfony Profiler is amazing for HTTP requests, but it doesn't help
 you much when a queue worker is eating up RAM in the background. The Console
-Profiler Bundle hooks right into your terminal to give you a live, self-updating
-dashboard while your commands are actually running.
-
-It doesn't bloat your production environment, and the UI won't break your
-standard output logs.
+Profiler Bundle hooks right into your terminal to give you a live, **premium TUI
+dashboard** while your commands are actually running.
 
 ![Console Profiler Dashboard](docs/dashboard.png)
 
 ---
 
-## Why use this over the Web Profiler?
+## Features
 
-The web profiler gives you a detailed snapshot after a request finishes. This
-bundle is built for **real-time CLI visibility**.
+* Live, auto-refreshing TUI dashboard pinned to the top of your terminal
+* Memory usage, peak memory, and growth rate with color-coded bars
+* Real-time trend indicators (`↑` `↓` `→`) for memory and SQL
+* CPU user/system time tracking via `getrusage()`
+* Automatic SQL query counting via Doctrine DBAL 4 Middleware
+* JSON profile export for CI pipeline regression testing
+* Exit code stamping on command completion
+* Zero configuration required — works out of the box
+* Graceful degradation without `ext-pcntl` (no auto-refresh)
 
-Here are a few things it can do that the standard profiler can't:
-
-1. **Catch memory leaks before the OOM crash:** We track your *Live Memory
-   Growth Rate* (in bytes/sec). If your Messenger worker is leaking memory, the
-   growth rate turns red so you can kill and debug it before the container dies.
-2. **Profile CI pipeline performance:** You can configure the bundle to dump a
-   JSON profile snapshot when a command finishes. You can parse this in your CI
-   (like GitHub Actions) to fail a build if someone introduces a massive N+1
-   query regression.
-3. **Capture exit codes cleanly:** When you string commands together in bash,
-   it's easy to lose track of what failed. The profiler freezes on completion
-   and stamps the final exit code right at the top.
+---
 
 ## Installation
 
@@ -65,13 +63,12 @@ console_profiler:
     refresh_interval: 1
 
     # Don't bother profiling these noisy default commands
+    # (these four are the defaults — add your own as needed)
     excluded_commands:
         - 'list'
         - 'help'
         - 'completion'
         - '_complete'
-        - 'cache:clear'
-        - 'cache:warmup'
 
     # Set this to a path to save a JSON dump for CI regression testing
     profile_dump_path: '%kernel.project_dir%/var/log/profiler/last_run.json'
@@ -114,16 +111,56 @@ The JSON dump tracks memory, CPU times, SQL counts, and more.
 
 ---
 
-## How it works under the hood
+## JSON Profile Schema
 
-We wanted this to be fast and safe, so we leaned on modern PHP features:
+When `profile_dump_path` is configured, the following JSON is written
+on command completion:
 
-* **PHP 8.4 Property Hooks:** We use hooks to pull live memory directly via
-  `memory_get_usage()` instead of caching stale data.
-* **Ext-PCNTL:** We use async signals (`SIGALRM`) to safely redraw the dashboard
-  once a second without freezing or interrupting your actual command logic.
-* **Doctrine Middleware:** We wrap Doctrine DBAL 4 connections natively, meaning
-  you don't have to change your repository code to count queries accurately.
+```json
+{
+  "timestamp": "2024-01-15T10:30:00+00:00",
+  "command": "app:import-data",
+  "environment": "dev",
+  "exit_code": 0,
+  "duration_seconds": 12.4523,
+  "memory": {
+    "usage_bytes": 16777216,
+    "peak_bytes": 33554432,
+    "limit_bytes": 268435456,
+    "growth_rate_bytes_per_sec": 524288.0
+  },
+  "cpu": {
+    "user_seconds": 8.12,
+    "system_seconds": 0.34
+  },
+  "counters": {
+    "sql_queries": 142,
+    "loaded_classes": 312,
+    "declared_functions": 1204,
+    "included_files": 89,
+    "gc_cycles": 2
+  },
+  "system": {
+    "php_version": "8.4.12",
+    "sapi": "cli",
+    "pid": 12345,
+    "opcache_enabled": true,
+    "xdebug_enabled": false
+  }
+}
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Ensure tests pass: `vendor/bin/phpunit`
+4. Ensure static analysis passes: `vendor/bin/phpstan analyze`
+5. Submit a pull request
 
 ## License
 
